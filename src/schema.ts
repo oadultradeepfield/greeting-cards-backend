@@ -18,6 +18,15 @@ const cardFields = {
 
 export const CardSchema = z.object(cardFields);
 
+export const ViewCardSchema = CardSchema.pick({
+  recipient: true,
+  sender: true,
+  occasion: true,
+  title: true,
+  thai_content: true,
+  english_content: true,
+});
+
 export const CreateCardSchema = z
   .object({
     recipient: cardFields.recipient,

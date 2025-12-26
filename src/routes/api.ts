@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { getCardById, incrementCardViews } from "../db";
-import { CardSchema } from "../schema";
+import { CardSchema, ViewCardSchema } from "../schema";
 
 const api = new Hono<{ Bindings: Env }>();
 
@@ -54,7 +54,7 @@ api.get("/cards/:id", async (c) => {
       );
     }
 
-    const validatedCard = CardSchema.parse(card);
+    const validatedCard = ViewCardSchema.parse(card);
 
     c.executionCtx.waitUntil(
       Promise.all([
