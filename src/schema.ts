@@ -3,50 +3,50 @@ import { z } from "zod";
 export const OccasionSchema = z.enum(["birthday", "general"]);
 
 const cardFields = {
-  id: z.string().length(10),
-  recipient: z.string().min(1),
-  sender: z.string().min(1),
-  occasion: OccasionSchema,
-  title: z.string().min(1),
-  thai_content: z.string().min(1).optional(),
-  english_content: z.string().min(1).optional(),
-  is_active: z.number().int().min(0).max(1),
-  created_at: z.string(),
-  updated_at: z.string(),
+	id: z.string().length(10),
+	recipient: z.string().min(1),
+	sender: z.string().min(1),
+	occasion: OccasionSchema,
+	title: z.string().min(1),
+	thai_content: z.string().min(1).optional(),
+	english_content: z.string().min(1).optional(),
+	is_active: z.number().int().min(0).max(1),
+	created_at: z.string(),
+	updated_at: z.string(),
 };
 
 export const CardSchema = z.object(cardFields);
 
 export const CreateCardSchema = z
-  .object({
-    recipient: cardFields.recipient,
-    sender: cardFields.sender,
-    occasion: cardFields.occasion,
-    title: cardFields.title,
-    thai_content: cardFields.thai_content,
-    english_content: cardFields.english_content,
-  })
-  .refine((data) => data.thai_content || data.english_content, {
-    message: "At least one of thai_content or english_content must be provided",
-  });
+	.object({
+		recipient: cardFields.recipient,
+		sender: cardFields.sender,
+		occasion: cardFields.occasion,
+		title: cardFields.title,
+		thai_content: cardFields.thai_content,
+		english_content: cardFields.english_content,
+	})
+	.refine((data) => data.thai_content || data.english_content, {
+		message: "At least one of thai_content or english_content must be provided",
+	});
 
 export const UpdateCardSchema = z
-  .object({
-    recipient: cardFields.recipient.optional(),
-    sender: cardFields.sender.optional(),
-    occasion: cardFields.occasion.optional(),
-    title: cardFields.title.optional(),
-    thai_content: cardFields.thai_content,
-    english_content: cardFields.english_content,
-    is_active: cardFields.is_active.optional(),
-  })
-  .refine(
-    (data) =>
-      data.thai_content !== undefined ||
-      data.english_content !== undefined ||
-      Object.keys(data).length > 0,
-    { message: "At least one field must be updated" },
-  );
+	.object({
+		recipient: cardFields.recipient.optional(),
+		sender: cardFields.sender.optional(),
+		occasion: cardFields.occasion.optional(),
+		title: cardFields.title.optional(),
+		thai_content: cardFields.thai_content,
+		english_content: cardFields.english_content,
+		is_active: cardFields.is_active.optional(),
+	})
+	.refine(
+		(data) =>
+			data.thai_content !== undefined ||
+			data.english_content !== undefined ||
+			Object.keys(data).length > 0,
+		{ message: "At least one field must be updated" },
+	);
 
 export const CardListSchema = z.array(CardSchema);
 

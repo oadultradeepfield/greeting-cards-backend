@@ -1,13 +1,18 @@
-import { EMOJI, occasionEmoji } from "../constants";
-import { getState, setState, clearState } from "../constants";
-import { createCard, updateCard, softDeleteCard } from "../../db";
-import type { CreateCard, UpdateCard, Occasion } from "../../schema";
-import { BotContext } from "..";
+import { createCard, softDeleteCard, updateCard } from "../../db";
+import type { CreateCard, Occasion, UpdateCard } from "../../schema";
+import type { BotContext } from "..";
+import {
+  clearState,
+  EMOJI,
+  getState,
+  occasionEmoji,
+  setState,
+} from "../constants";
 
 export async function handleTextMessage(ctx: BotContext) {
   const chatId = ctx.chat?.id.toString() || "";
   const state = getState(chatId);
-  const text = ctx.message!.text!.trim();
+  const text = ctx.message?.text?.trim() || "";
 
   if (state.step === "idle") {
     await ctx.reply(
@@ -116,12 +121,14 @@ export async function handleTextMessage(ctx: BotContext) {
     const englishStatus =
       text.toLowerCase() === "skip" ? "Skipped" : `"${text}"`;
 
+    const occasion = state.data.occasion ?? "general";
+
     await ctx.reply(
       `${EMOJI.check} English content: ${englishStatus}\n\n` +
         `${EMOJI.sparkles} *Review Your Card* ${EMOJI.sparkles}\n\n` +
         `${EMOJI.to} *To:* ${state.data.recipient}\n` +
         `${EMOJI.from} *From:* ${state.data.sender}\n` +
-        `${occasionEmoji(state.data.occasion!)} *Occasion:* ${state.data.occasion}\n` +
+        `${occasionEmoji(occasion)} *Occasion:* ${occasion}\n` +
         `${EMOJI.tag} *Title:* ${state.data.title}\n` +
         (state.data.thai_content
           ? `${EMOJI.thai} *Thai:* ${state.data.thai_content}\n`
@@ -139,14 +146,33 @@ export async function handleTextMessage(ctx: BotContext) {
   if (state.step === "create_confirm") {
     const answer = text.toLowerCase();
     if (answer === "yes" || answer === "y") {
+      const {
+        recipient,
+        sender,
+        occasion,
+        title,
+        thai_content,
+        english_content,
+      } = state.data;
+
+      if (!recipient || !sender || !occasion || !title) {
+        clearState(chatId);
+        await ctx.reply(
+          `${EMOJI.warning} *Oops!* Missing required card data.\n` +
+            `Please try again with /create`,
+          { parse_mode: "Markdown" },
+        );
+        return;
+      }
+
       try {
         const cardData: CreateCard = {
-          recipient: state.data.recipient!,
-          sender: state.data.sender!,
-          occasion: state.data.occasion!,
-          title: state.data.title!,
-          thai_content: state.data.thai_content,
-          english_content: state.data.english_content,
+          recipient,
+          sender,
+          occasion,
+          title,
+          thai_content,
+          english_content,
         };
         const card = await createCard(ctx.env.CARD_DB, cardData);
         clearState(chatId);
@@ -158,7 +184,7 @@ export async function handleTextMessage(ctx: BotContext) {
             `Use /view ${card.id} to see the full details ${EMOJI.eyes}`,
           { parse_mode: "Markdown" },
         );
-      } catch (error) {
+      } catch (_error) {
         clearState(chatId);
         await ctx.reply(
           `${EMOJI.warning} *Oops!* Failed to create card.\n` +
@@ -227,8 +253,18 @@ export async function handleTextMessage(ctx: BotContext) {
   }
 
   if (state.step === "update_value") {
-    const field = state.data.updateField!;
-    const id = state.data.id!;
+    const field = state.data.updateField;
+    const id = state.data.id;
+
+    if (!field || !id) {
+      clearState(chatId);
+      await ctx.reply(
+        `${EMOJI.warning} *Oops!* Missing update context.\n` +
+          `Please try again with /update`,
+        { parse_mode: "Markdown" },
+      );
+      return;
+    }
 
     if (field === "occasion") {
       const occasion = text.toLowerCase();
@@ -270,7 +306,7 @@ export async function handleTextMessage(ctx: BotContext) {
 
       if (!updated) {
         await ctx.reply(
-          `${EMOJI.cross} *Update failed!*\n\n` + `Card may have been deleted.`,
+          `${EMOJI.cross} *Update failed!*\n\nCard may have been deleted.`,
           { parse_mode: "Markdown" },
         );
         return;
@@ -282,7 +318,7 @@ export async function handleTextMessage(ctx: BotContext) {
           `Use /view ${id} to see the full card ${EMOJI.eyes}`,
         { parse_mode: "Markdown" },
       );
-    } catch (error) {
+    } catch (_error) {
       clearState(chatId);
       await ctx.reply(
         `${EMOJI.warning} *Oops!* Failed to update card.\n` +
@@ -295,9 +331,21 @@ export async function handleTextMessage(ctx: BotContext) {
 
   if (state.step === "delete_confirm") {
     const answer = text.toLowerCase();
+    const id = state.data.id;
+
+    if (!id) {
+      clearState(chatId);
+      await ctx.reply(
+        `${EMOJI.warning} *Oops!* Missing card ID.\n` +
+          `Please try again with /delete`,
+        { parse_mode: "Markdown" },
+      );
+      return;
+    }
+
     if (answer === "yes" || answer === "y") {
       try {
-        const deleted = await softDeleteCard(ctx.env.CARD_DB, state.data.id!);
+        const deleted = await softDeleteCard(ctx.env.CARD_DB, id);
         clearState(chatId);
 
         if (!deleted) {
@@ -315,7 +363,7 @@ export async function handleTextMessage(ctx: BotContext) {
             `Use /list to see remaining cards ${EMOJI.list}`,
           { parse_mode: "Markdown" },
         );
-      } catch (error) {
+      } catch (_error) {
         clearState(chatId);
         await ctx.reply(
           `${EMOJI.warning} *Oops!* Failed to delete card.\n` +
