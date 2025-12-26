@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "greeting-cards-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "FRONTEND_URL": "https://cards.phanuphats.com",
+  },
+  "kv_namespaces": [
+    {
+      "binding": "CARD_CACHE",
+      "id": "00a36bcc94a54df3b9db271af6dcb73d",
+    },
+  ],
+  "d1_databases": [
+    {
+      "binding": "CARD_DB",
+      "database_name": "greeting-cards-db",
+      "database_id": "16b1ac76-9c05-4c0a-8e50-68be8b4c0369",
+    },
+  ],
+  "observability": {
+    "enabled": true,
+  },
+}

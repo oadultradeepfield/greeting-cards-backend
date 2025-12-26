@@ -1,0 +1,18 @@
+{
+  "name": "greeting-cards-backend",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface Env"
+  },
+  "dependencies": {
+    "grammy": "^1.38.4",
+    "hono": "^4.11.2",
+    "nanoid": "^5.1.6",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.4.0"
+  }
+}
