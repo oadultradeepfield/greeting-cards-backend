@@ -11,31 +11,21 @@ This project is a Telegram bot and web server for creating greeting cards for oc
 
 1. Install dependencies:
 
-```txt
-pnpm i
-```
+    ```bash
+    pnpm i
+    ```
 
-2. Configure environment variables:
+2. Configure environment variables by copying the example environment file and filling in your values:
 
-Copy the example environment file and fill in your values:
-
-```txt
-cp .env.example .env
-```
-
-Required environment variables:
-
-```txt
-TELEGRAM_CHAT_ID=
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_WEBHOOK_SECRET=
-```
+  ```bash
+  cp .env.example .env
+  ```
 
 3. Generate/synchronise types based on your Worker configuration:
 
-```txt
-pnpm run cf-typegen
-```
+  ```bash
+  pnpm run cf-typegen
+  ```
 
 [Learn more about cf-typegen](https://developers.cloudflare.com/workers/wrangler/commands/#types)
 
@@ -43,21 +33,21 @@ pnpm run cf-typegen
 
 1. Run linting:
 
-```txt
-pnpm run lint
-```
+  ```bash
+  pnpm run lint
+  ```
 
 2. Start the development server:
 
-```txt
-pnpm run dev
-```
+  ```bash
+  pnpm run dev
+  ```
 
 3. Deploy to Cloudflare Workers:
 
-```txt
-pnpm run deploy
-```
+  ```bash
+  pnpm run deploy
+  ```
 
 ## License
 
