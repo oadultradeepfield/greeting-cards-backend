@@ -29,6 +29,17 @@ api.get("/cards/:id", async (c) => {
 			);
 		}
 
+		const cacheKey = `card:${id}`;
+		const cachedCard = await c.env.CARD_CACHE.get(cacheKey, "json");
+
+		if (cachedCard) {
+			const validatedCard = CardSchema.parse(cachedCard);
+			return c.json({
+				success: true,
+				data: validatedCard,
+			});
+		}
+
 		const card = await getCardById(c.env.CARD_DB, id);
 
 		if (!card) {
@@ -42,6 +53,10 @@ api.get("/cards/:id", async (c) => {
 		}
 
 		const validatedCard = CardSchema.parse(card);
+
+		await c.env.CARD_CACHE.put(cacheKey, JSON.stringify(validatedCard), {
+			expirationTtl: 3600,
+		});
 
 		return c.json({
 			success: true,

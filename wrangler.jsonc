@@ -4,6 +4,12 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-12-26",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "cards-api.phanuphats.com",
+      "custom_domain": true,
+    },
+  ],
   "vars": {
     "FRONTEND_URL": "https://cards.phanuphats.com",
   },
