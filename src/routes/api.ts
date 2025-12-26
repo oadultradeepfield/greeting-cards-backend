@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { getCardById, incrementCardViews } from "../db";
-import { CardSchema, ViewCardSchema } from "../schema";
+import { ViewCardSchema } from "../schema";
 
 const api = new Hono<{ Bindings: Env }>();
 
 api.use("/*", async (c, next) => {
   const corsMiddleware = cors({
-    origin: c.env.FRONTEND_URL,
+    origin: [c.env.FRONTEND_URL],
     allowMethods: ["GET", "OPTIONS"],
     allowHeaders: ["Content-Type"],
     maxAge: 86400,
@@ -33,7 +33,7 @@ api.get("/cards/:id", async (c) => {
     const cachedCard = await c.env.CARD_CACHE.get(cacheKey, "json");
 
     if (cachedCard) {
-      const validatedCard = CardSchema.parse(cachedCard);
+      const validatedCard = ViewCardSchema.safeParse(cachedCard);
       c.executionCtx.waitUntil(incrementCardViews(c.env.CARD_DB, id));
 
       return c.json({
@@ -54,7 +54,7 @@ api.get("/cards/:id", async (c) => {
       );
     }
 
-    const validatedCard = ViewCardSchema.parse(card);
+    const validatedCard = ViewCardSchema.safeParse(card);
 
     c.executionCtx.waitUntil(
       Promise.all([

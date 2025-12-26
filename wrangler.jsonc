@@ -17,6 +17,7 @@
     {
       "binding": "CARD_CACHE",
       "id": "00a36bcc94a54df3b9db271af6dcb73d",
+      "remote": true,
     },
   ],
   "d1_databases": [
@@ -24,6 +25,7 @@
       "binding": "CARD_DB",
       "database_name": "greeting-cards-db",
       "database_id": "16b1ac76-9c05-4c0a-8e50-68be8b4c0369",
+      "remote": true,
     },
   ],
   "observability": {
