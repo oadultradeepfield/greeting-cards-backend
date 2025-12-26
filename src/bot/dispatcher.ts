@@ -3,6 +3,7 @@ import {
 	handleHelp,
 	handleList,
 	handleStart,
+	handleUpdate as handleUpdateCommand,
 	handleView,
 } from "./commands";
 import { handleConversation } from "./conversations";
@@ -43,6 +44,9 @@ export async function handleUpdate(env: Env, update: TelegramUpdate) {
 				break;
 			case "/delete":
 				await handleDelete(client, chatId, text, env);
+				break;
+			case "/update":
+				await handleUpdateCommand(client, chatId, text, env);
 				break;
 			case "/cancel":
 				await clearState(env.CARD_CACHE, chatId);

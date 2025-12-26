@@ -1,8 +1,13 @@
-import { createCard, softDeleteCard } from "../db";
+import { createCard, softDeleteCard, updateCard } from "../db";
 import type { CreateCard } from "../schema";
+import { parseFieldSelection } from "./commands";
 import { EMOJI } from "./constants";
 import { type ConversationState, clearState, setState } from "./state";
 import type { TelegramClient } from "./telegram";
+
+async function invalidateCardCache(kv: KVNamespace, cardId: string) {
+	await kv.delete(`card:${cardId}`);
+}
 
 export async function handleConversation(
 	client: TelegramClient,
@@ -14,11 +19,81 @@ export async function handleConversation(
 	if (state.step === "delete_confirm") {
 		if (text.toLowerCase() === "yes") {
 			if (state.data.id) {
-				await softDeleteCard(env.CARD_DB, state.data.id);
-				await client.sendMessage(chatId, `${EMOJI.trash} Card deleted.`);
+				try {
+					await softDeleteCard(env.CARD_DB, state.data.id);
+					await invalidateCardCache(env.CARD_CACHE, state.data.id);
+					await client.sendMessage(chatId, `${EMOJI.trash} Card deleted.`);
+				} catch (_e) {
+					await client.sendMessage(
+						chatId,
+						`${EMOJI.cross} Failed to delete card.`,
+					);
+				}
 			}
 		} else {
 			await client.sendMessage(chatId, `${EMOJI.cross} Deletion cancelled.`);
+		}
+		await clearState(env.CARD_CACHE, chatId);
+		return;
+	}
+
+	if (state.step === "update_select_field") {
+		const field = parseFieldSelection(text);
+		if (!field) {
+			await client.sendMessage(
+				chatId,
+				`${EMOJI.warning} Invalid field. Please enter a valid field name or number.`,
+			);
+			return;
+		}
+		state.data.updateField = field;
+		state.step = "update_value";
+		await setState(env.CARD_CACHE, chatId, state);
+
+		const hint = field === "occasion" ? " (birthday/general)" : "";
+		await client.sendMessage(
+			chatId,
+			`${EMOJI.pencil} Enter new value for *${field}*${hint}:`,
+			{ parse_mode: "Markdown" },
+		);
+		return;
+	}
+
+	if (state.step === "update_value") {
+		const field = state.data.updateField;
+		const cardId = state.data.id;
+
+		if (!field || !cardId) {
+			await client.sendMessage(chatId, `${EMOJI.cross} Invalid state.`);
+			await clearState(env.CARD_CACHE, chatId);
+			return;
+		}
+
+		if (field === "occasion") {
+			const occasion = text.toLowerCase();
+			if (occasion !== "birthday" && occasion !== "general") {
+				await client.sendMessage(
+					chatId,
+					`${EMOJI.warning} Please type 'birthday' or 'general'.`,
+				);
+				return;
+			}
+		}
+
+		try {
+			const updated = await updateCard(env.CARD_DB, cardId, { [field]: text });
+			if (updated) {
+				await invalidateCardCache(env.CARD_CACHE, cardId);
+				await client.sendMessage(
+					chatId,
+					`${EMOJI.check} Updated *${field}* successfully!`,
+					{ parse_mode: "Markdown" },
+				);
+			} else {
+				await client.sendMessage(chatId, `${EMOJI.cross} Card not found.`);
+			}
+		} catch (_e) {
+			await client.sendMessage(chatId, `${EMOJI.cross} Failed to update card.`);
 		}
 		await clearState(env.CARD_CACHE, chatId);
 		return;
@@ -41,7 +116,7 @@ export async function handleConversation(
 		await setState(env.CARD_CACHE, chatId, state);
 		await client.sendMessage(
 			chatId,
-			`${EMOJI.check} Sender: ${text}\n\n${EMOJI.gift} Occasion? (birthday/general)`,
+			`${EMOJI.from} Sender: ${text}\n\n${EMOJI.gift} Occasion? (birthday/general)`,
 		);
 		return;
 	}
@@ -60,7 +135,7 @@ export async function handleConversation(
 		await setState(env.CARD_CACHE, chatId, state);
 		await client.sendMessage(
 			chatId,
-			`${EMOJI.check} Occasion: ${occasion}\n\n${EMOJI.tag} Card Title?`,
+			`${EMOJI.gift} Occasion: ${occasion}\n\n${EMOJI.tag} Card Title?`,
 		);
 		return;
 	}
@@ -71,7 +146,7 @@ export async function handleConversation(
 		await setState(env.CARD_CACHE, chatId, state);
 		await client.sendMessage(
 			chatId,
-			`${EMOJI.check} Title: ${text}\n\n${EMOJI.thai} Thai content? (type 'skip' to skip)`,
+			`${EMOJI.tag} Title: ${text}\n\n${EMOJI.thai} Thai content? (type 'skip' to skip)`,
 		);
 		return;
 	}
@@ -82,7 +157,7 @@ export async function handleConversation(
 		await setState(env.CARD_CACHE, chatId, state);
 		await client.sendMessage(
 			chatId,
-			`${EMOJI.check} Thai: ${text}\n\n${EMOJI.english} English content? (type 'skip' to skip)`,
+			`${EMOJI.thai} Thai: ${text}\n\n${EMOJI.english} English content? (type 'skip' to skip)`,
 		);
 		return;
 	}
@@ -93,7 +168,7 @@ export async function handleConversation(
 		if (!state.data.thai_content && !state.data.english_content) {
 			await client.sendMessage(
 				chatId,
-				`${EMOJI.warning} You must provide at least one language! Try again.`,
+				`${EMOJI.english} You must provide at least one language! Try again.`,
 			);
 			return;
 		}
@@ -120,6 +195,7 @@ export async function handleConversation(
 		if (text.toLowerCase() === "yes") {
 			try {
 				const card = await createCard(env.CARD_DB, state.data as CreateCard);
+				await invalidateCardCache(env.CARD_CACHE, card.id);
 				await client.sendMessage(
 					chatId,
 					`${EMOJI.celebration} Card Created! ID: \`${card.id}\``,

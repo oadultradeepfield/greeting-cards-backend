@@ -82,7 +82,7 @@ export async function updateCard(
 		fields.push("english_content = ?");
 		values.push(updates.english_content);
 	}
-	if (updates.is_active) {
+	if (updates.is_active !== undefined) {
 		fields.push("is_active = ?");
 		values.push(updates.is_active);
 	}
