@@ -38,7 +38,7 @@ api.get("/cards/:id", async (c) => {
 
       return c.json({
         success: true,
-        data: validatedCard,
+        data: validatedCard.data,
       });
     }
 
@@ -67,7 +67,7 @@ api.get("/cards/:id", async (c) => {
 
     return c.json({
       success: true,
-      data: validatedCard,
+      data: validatedCard.data,
     });
   } catch (error) {
     console.error("Error fetching card:", error);
