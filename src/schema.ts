@@ -11,8 +11,9 @@ const cardFields = {
   thai_content: z.string().min(1).optional(),
   english_content: z.string().min(1).optional(),
   is_active: z.number().int().min(0).max(1),
-  created_at: z.string(),
-  updated_at: z.string(),
+  views: z.number().min(0).default(0),
+  created_at: z.number(),
+  updated_at: z.number(),
 };
 
 export const CardSchema = z.object(cardFields);

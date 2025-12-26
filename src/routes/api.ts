@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { getCardById } from "../db";
+import { getCardById, incrementCardViews } from "../db";
 import { CardSchema } from "../schema";
 
 const api = new Hono<{ Bindings: Env }>();
@@ -34,6 +34,8 @@ api.get("/cards/:id", async (c) => {
 
     if (cachedCard) {
       const validatedCard = CardSchema.parse(cachedCard);
+      c.executionCtx.waitUntil(incrementCardViews(c.env.CARD_DB, id));
+
       return c.json({
         success: true,
         data: validatedCard,
@@ -54,9 +56,14 @@ api.get("/cards/:id", async (c) => {
 
     const validatedCard = CardSchema.parse(card);
 
-    await c.env.CARD_CACHE.put(cacheKey, JSON.stringify(validatedCard), {
-      expirationTtl: 3600,
-    });
+    c.executionCtx.waitUntil(
+      Promise.all([
+        incrementCardViews(c.env.CARD_DB, id),
+        c.env.CARD_CACHE.put(cacheKey, JSON.stringify(validatedCard), {
+          expirationTtl: 3600,
+        }),
+      ]),
+    );
 
     return c.json({
       success: true,

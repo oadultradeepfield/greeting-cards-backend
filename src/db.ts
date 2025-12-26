@@ -100,6 +100,21 @@ export async function updateCard(
   return result ?? null;
 }
 
+export async function incrementCardViews(
+  db: D1Database,
+  id: string,
+): Promise<Card | null> {
+  const now = Math.floor(Date.now() / 1000);
+  const result = await db
+    .prepare(
+      `UPDATE cards SET views = views + 1, updated_at = ? WHERE id = ? RETURNING *`,
+    )
+    .bind(now, id)
+    .first<Card>();
+
+  return result ?? null;
+}
+
 export async function softDeleteCard(
   db: D1Database,
   id: string,

@@ -1,8 +1,8 @@
 # Greeting Cards Backend
 
-A Telegram bot and REST API for creating and managing digital greeting cards. Built with [Hono](https://hono.dev/) and deployed on [Cloudflare Workers](https://workers.cloudflare.com/).
+Telegram bot and REST API for managing digital greeting cards. Built with [Hono](https://hono.dev/) on [Cloudflare Workers](https://workers.cloudflare.com/).
 
-## Architecture
+## Overview
 
 ```mermaid
 flowchart LR
@@ -31,84 +31,93 @@ flowchart LR
     KV -.->|miss| D1
 ```
 
-## Environment Variables
-
-| Variable                  | Description                                                  |
-| ------------------------- | ------------------------------------------------------------ |
-| `TELEGRAM_BOT_TOKEN`      | Bot token from [@BotFather](https://t.me/BotFather)          |
-| `TELEGRAM_WEBHOOK_SECRET` | Secret token for webhook verification                        |
-| `TELEGRAM_CHAT_ID`        | Allowed chat ID for bot interactions                         |
-| `FRONTEND_URL`            | Frontend origin for CORS (e.g., `https://cards.example.com`) |
-
-## Bindings
-
-| Binding      | Type         | Description                         |
-| ------------ | ------------ | ----------------------------------- |
-| `CARD_DB`    | D1 Database  | Stores greeting card records        |
-| `CARD_CACHE` | KV Namespace | Caches cards and conversation state |
-
-### KV Key Patterns
-
-| Pattern                | TTL    | Description                          |
-| ---------------------- | ------ | ------------------------------------ |
-| `card:<id>`            | 1 hour | Cached card data                     |
-| `chat:<chat_id>:state` | 1 hour | Conversation state for Telegram chat |
-
-## Bot Commands
-
-| Command        | Description              |
-| -------------- | ------------------------ |
-| `/start`       | Welcome message          |
-| `/help`        | Show available commands  |
-| `/create`      | Start card creation flow |
-| `/list`        | List all active cards    |
-| `/view <id>`   | View a specific card     |
-| `/update <id>` | Update a card            |
-| `/delete <id>` | Soft-delete a card       |
-| `/cancel`      | Cancel current operation |
-
-## API Endpoints
-
-| Method | Endpoint         | Description               |
-| ------ | ---------------- | ------------------------- |
-| `GET`  | `/`              | Health check and API info |
-| `GET`  | `/api/cards/:id` | Retrieve a card by ID     |
-
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v18+
 - [pnpm](https://pnpm.io/)
 - [Cloudflare account](https://dash.cloudflare.com/)
 
-## Setup
+## Installation
 
-1. Install dependencies:
+1.  Install dependencies:
 
-   ```sh
-   pnpm install
-   ```
+    ```sh
+    pnpm install
+    ```
 
-2. Configure environment:
+2.  Generate types:
 
-   ```sh
-   cp .env.example .env
-   ```
+    ```sh
+    pnpm run cf-typegen
+    ```
 
-   Edit `.env` with your values.
+## Configuration
 
-3. Generate types:
+### Environment Variables
 
-   ```sh
-   pnpm run cf-typegen
-   ```
+Create a `.env` file from `.env.example` and set the following secrets:
+
+| Variable                  | Description                                      |
+| ------------------------- | ------------------------------------------------ |
+| `TELEGRAM_BOT_TOKEN`      | Token from [@BotFather](https://t.me/BotFather). |
+| `TELEGRAM_WEBHOOK_SECRET` | Secret for webhook verification.                 |
+| `TELEGRAM_CHAT_ID`        | Allowed chat ID for interactions.                |
+
+### Variables
+
+Configured in `wrangler.jsonc`:
+
+| Variable       | Description                                                      |
+| -------------- | ---------------------------------------------------------------- |
+| `FRONTEND_URL` | Frontend origin for CORS (e.g., `https://cards.phanuphats.com`). |
+
+### Bindings
+
+| Binding      | Type         | Description                          |
+| ------------ | ------------ | ------------------------------------ |
+| `CARD_DB`    | D1 Database  | Stores greeting card records.        |
+| `CARD_CACHE` | KV Namespace | Caches cards and conversation state. |
+
+**KV Key Patterns**
+
+| Pattern                | TTL    | Description                           |
+| ---------------------- | ------ | ------------------------------------- |
+| `card:<id>`            | 1 hour | Cached card data.                     |
+| `chat:<chat_id>:state` | 1 hour | Conversation state for Telegram chat. |
 
 ## Development
+
+Start the local development server:
 
 ```sh
 pnpm run dev
 ```
 
+## Usage
+
+### Bot Commands
+
+| Command        | Description               |
+| -------------- | ------------------------- |
+| `/start`       | Welcome message.          |
+| `/help`        | Show available commands.  |
+| `/create`      | Start card creation flow. |
+| `/list`        | List all active cards.    |
+| `/view <id>`   | View a specific card.     |
+| `/update <id>` | Update a card.            |
+| `/delete <id>` | Soft-delete a card.       |
+| `/cancel`      | Cancel current operation. |
+
+### API Endpoints
+
+| Method | Endpoint         | Description                |
+| ------ | ---------------- | -------------------------- |
+| `GET`  | `/`              | Health check and API info. |
+| `GET`  | `/api/cards/:id` | Retrieve a card by ID.     |
+
 ## Deployment
+
+Deploy to Cloudflare Workers:
 
 ```sh
 pnpm run deploy

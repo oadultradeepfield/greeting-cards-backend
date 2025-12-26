@@ -29,6 +29,7 @@ export async function handleView(ctx: CommandContext): Promise<void> {
       `Occasion: ${card.occasion} ${occasionEmoji(card.occasion)}\n` +
       `Thai: ${card.thai_content || "-"}\n` +
       `English: ${card.english_content || "-"}\n\n` +
+      `Views: ${card.views}\n` +
       `Link: ${env.FRONTEND_URL}/${card.id}`,
     { parse_mode: "Markdown" },
   );
