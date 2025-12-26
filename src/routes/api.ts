@@ -7,7 +7,7 @@ const api = new Hono<{ Bindings: Env }>();
 
 api.use("/*", async (c, next) => {
   const corsMiddleware = cors({
-    origin: [c.env.FRONTEND_URL],
+    origin: [c.env.FRONTEND_URL, "http://localhost:5173"],
     allowMethods: ["GET", "OPTIONS"],
     allowHeaders: ["Content-Type"],
     maxAge: 86400,
@@ -33,12 +33,12 @@ api.get("/cards/:id", async (c) => {
     const cachedCard = await c.env.CARD_CACHE.get(cacheKey, "json");
 
     if (cachedCard) {
-      const validatedCard = ViewCardSchema.safeParse(cachedCard);
+      const validatedCard = ViewCardSchema.parse(cachedCard);
       c.executionCtx.waitUntil(incrementCardViews(c.env.CARD_DB, id));
 
       return c.json({
         success: true,
-        data: validatedCard.data,
+        data: validatedCard,
       });
     }
 
@@ -54,7 +54,7 @@ api.get("/cards/:id", async (c) => {
       );
     }
 
-    const validatedCard = ViewCardSchema.safeParse(card);
+    const validatedCard = ViewCardSchema.parse(card);
 
     c.executionCtx.waitUntil(
       Promise.all([
@@ -67,7 +67,7 @@ api.get("/cards/:id", async (c) => {
 
     return c.json({
       success: true,
-      data: validatedCard.data,
+      data: validatedCard,
     });
   } catch (error) {
     console.error("Error fetching card:", error);
