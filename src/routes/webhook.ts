@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { handleUpdate } from "../bot/dispatcher";
+import { handleTelegramUpdate } from "../bot/dispatcher";
 
 const webhook = new Hono<{ Bindings: Env }>();
 
@@ -25,7 +25,7 @@ webhook.post("/", async (c) => {
 				return c.json({ ok: true });
 			}
 		}
-		await handleUpdate(c.env, update);
+		await handleTelegramUpdate(c.env, update);
 	} catch (e) {
 		console.error("Engine Error:", e);
 	}
