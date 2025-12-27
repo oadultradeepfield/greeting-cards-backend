@@ -82,3 +82,5 @@ function getClientIp(c: Context) {
     null
   );
 }
+
+export default api;
